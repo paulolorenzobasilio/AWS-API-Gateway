@@ -4,6 +4,7 @@
 + [About](#about)
 + [Getting Started](#getting_started)
 + [Usage](#usage)
++ [Resources](#resources)
 
 ## About <a name = "about"></a>
 A simple AWS API Gateway Node.js application that creates rest resources from OpenAPI specification that doesn't overrides REST application.
@@ -67,3 +68,9 @@ Get the rest-api-id and parent-id. Click one of your resources
 https://us-east-2.console.aws.amazon.com/apigateway/home?region={region}#/apis/{rest-api-id}/resources/{parent-id}
 ```
 
+## Resources <a name = "resources"></a>
+* [Amazon API Gateway](https://docs.aws.amazon.com/apigateway/latest/developerguide/welcome.html)
+* [Setup REST API](https://docs.aws.amazon.com/apigateway/latest/developerguide/create-api-using-awssdk.html)
+* [AWS Javascript SDK](https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/APIGateway.html)
+* [AWS API Gateway References](https://docs.aws.amazon.com/apigateway/api-reference/)
+* [REST API Method Execution](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-method-settings-execution-console.html)
