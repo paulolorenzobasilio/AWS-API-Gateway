@@ -5,8 +5,8 @@ let apiGateway = new AWS.APIGateway();
 
 var argv = require('minimist')(process.argv.slice(2));
 
-const restApiId = argv["rest-api-id"] || 'k21xbs0us3';
-const parentId = argv["parent-id"] || 'yay805daa8';
+const restApiId = argv["rest-api-id"];
+const parentId = argv["parent-id"];
 const swaggerfile = argv["swagger-file"];
 let parentResource = "";
 
@@ -86,58 +86,64 @@ async function awsPutIntegrationResponse(options) {
     })
 }
 
-async function addPathToResource(_path, index, _paths) {
-    await waitFor(69);
-
-    let resourceData = {
-        restApiId: restApiId,
-        parentId: '',
-        pathPart: _path
-    }
-
-    const pathPart = index === 0
-        ? `/${_path}` : constructPath(_paths, index + 1)
-    const resources = await awsGetResources()
-    const isResourceDefine = resources.find(resource => resource.path === fullPath(pathPart))
-
-    if (isResourceDefine) {
-        return;
-    }
-
-    /**
-     * if the path being evaluated is /users/{users_id}/security_update
-     * and the pathPart being evaluated is /users and the resource does not exists.
-     * This will create the resource for /users
-    */
-    if (isResourceDefine === undefined && index === 0) {
-        resourceData.parentId = parentId
-        await awsCreateResource(resourceData)
-        return;
-    }
-
-    /**
-     * get the parent resource for the given path part
-     * e.g. /users/{users_id}/security_update
-     * if the pathPart being tested is /{users_id}
-     * the parentResourcePath will be /users
-     * if the pathPart being tested is /security_update
-     * the parentResource path will be /users/{users_id} 
-     */
-    const parentResourcePath = constructPath(_paths, index)
-    const parentResource = resources.find(resource => resource.path === fullPath(parentResourcePath))
-    resourceData.parentId = parentResource.id
-    await awsCreateResource(resourceData)
-}
-
 async function createResource(path) {
+    /**
+     * This creates an array of new path then joined by ('/') to form into string
+     * @param {*} paths 
+     *  @param {*} end - the end string
+    */
+    function constructPath(paths, end) {
+        return `/${paths.slice(0, end).join('/')}`
+    }
+
+    async function addPathToResource(_path, index, _paths) {
+        await waitFor(69);
+
+        let resourceData = {
+            restApiId: restApiId,
+            parentId: '',
+            pathPart: _path
+        }
+
+        const pathPart = index === 0
+            ? `/${_path}` : constructPath(_paths, index + 1)
+        const resources = await awsGetResources()
+        const isResourceDefine = resources.find(resource => resource.path === fullPath(pathPart))
+
+        if (isResourceDefine) {
+            return;
+        }
+
+        /**
+         * if the path being evaluated is /users/{users_id}/security_update
+         * and the pathPart being evaluated is /users and the resource does not exists.
+         * This will create the resource for /users
+        */
+        if (isResourceDefine === undefined && index === 0) {
+            resourceData.parentId = parentId
+            await awsCreateResource(resourceData)
+            return;
+        }
+
+        /**
+         * get the parent resource for the given path part
+         * e.g. /users/{users_id}/security_update
+         * if the pathPart being tested is /{users_id}
+         * the parentResourcePath will be /users
+         * if the pathPart being tested is /security_update
+         * the parentResource path will be /users/{users_id} 
+         */
+        const parentResourcePath = constructPath(_paths, index)
+        const parentResource = resources.find(resource => resource.path === fullPath(parentResourcePath))
+        resourceData.parentId = parentResource.id
+        await awsCreateResource(resourceData)
+    }
+
     let paths = path.split('/');
     paths.shift(); //remove the forward '/'
+
     await asyncForEach(paths, addPathToResource)
     return (await awsGetResources()).find(resource => resource.path === fullPath(path))
-}
-
-function isValidParameter(parameter) {
-    return ['query', 'path'].includes(parameter.in);
 }
 
 /**
@@ -145,6 +151,10 @@ function isValidParameter(parameter) {
  * @param {*} parameters 
  */
 function constructRequestParameters(parameters = []) {
+    function isValidParameter(parameter) {
+        return ['query', 'path'].includes(parameter.in);
+    }
+
     let requestParameters = {
         "methodRequestParameters": {},
         "integrationRequestParameters": {}
@@ -172,16 +182,8 @@ function cleanURI(path) {
 function fullPath(path) {
     return cleanURI(`${parentResource.path}${path}`);
 }
-/**
- * This creates an array of new path then joined by ('/') to form into string
- * @param {*} paths 
- * @param {*} end - the end string
- */
-function constructPath(paths, end) {
-    return `/${paths.slice(0, end).join('/')}`
-}
 
-(async function () {
+(async function createResourceRESTApi () {
     parentResource = (await awsGetResources()).find(resource => resource.id === parentId);
     for (let [path, httpResource] of Object.entries(restapi.paths)) {
         const resourceId = (await createResource(path)).id;
@@ -216,7 +218,7 @@ function constructPath(paths, end) {
              * put the http method response
              */
             const responses = Object.keys(methodResource.responses).filter(response => response !== 'default');
-            await asyncForEach(responses, async function (response) {
+            await asyncForEach(responses, async function putResponses (response) {
                 const properties = {
                     restApiId: restApiId,
                     resourceId: resourceId,
