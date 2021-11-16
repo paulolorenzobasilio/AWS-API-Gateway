@@ -1,6 +1,6 @@
 {
     "dependencies": {
-        "aws-sdk": ">= 2.0.9",
+        "aws-sdk": ">= 2.814.0",
         "bluebird": "^3.5.5",
         "js-yaml": "^3.13.1",
         "minimist": "^1.2.2",
